@@ -1,0 +1,48 @@
+
+version: 2
+
+models:
+  - name: fct_marketing_performance
+    description: >
+      Unified daily Facebook and Snapchat advertising
+      performance model. Spend is retained in its
+      original currency. CTR is expressed as a ratio.
+
+    columns:
+      - name: marketing_performance_key
+        description: "Unique identifier for each performance record."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: platform
+        description: "Advertising platform."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['facebook', 'snapchat']
+
+      - name: ad_id
+        description: "Platform-specific advertisement identifier."
+        data_tests:
+          - not_null
+
+      - name: ad_date
+        description: "Date of advertising performance."
+        data_tests:
+          - not_null
+
+      - name: currency_code
+        description: "Original currency of advertising spend."
+        data_tests:
+          - not_null
+
+      - name: spend
+        description: "Advertising spend in source currency."
+
+      - name: impressions
+        description: "Number of advertising impressions."
+
+      - name: clicks
+        description: "Number of advertising clicks."
