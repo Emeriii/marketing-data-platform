@@ -1,0 +1,24 @@
+version: 2
+
+sources:
+  - name: facebook
+    description: "Raw Facebook advertising data ingested into Databricks."
+
+    database: marketing_development
+    schema: bronze
+
+    tables:
+      - name: facebook_accounts
+        description: "Facebook advertising account information."
+
+      - name: facebook_campaigns
+        description: "Facebook advertising campaigns."
+
+      - name: facebook_adgroups
+        description: "Facebook advertising ad groups."
+
+      - name: facebook_ads
+        description: "Facebook individual advertisements."
+
+      - name: facebook_ads_stats
+        description: "Daily Facebook advertising performance statistics."

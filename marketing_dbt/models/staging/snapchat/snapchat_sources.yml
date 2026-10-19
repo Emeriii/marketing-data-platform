@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: snapchat
+    description: "Raw Snapchat advertising data ingested into Databricks."
+
+    database: marketing_development
+    schema: bronze
+
+    tables:
+      - name: snapchat_campaigns
+        description: "Snapchat campaign information."
+      
+
+      - name: snapchat_adgroups
+        description: "Snapchat ad group history."
+
+      - name: snapchat_ads
+        description: "Snapchat advertisements information."
+
+      - name: snapchat_ads_stats
+        description: "Snapchat advertising performance statistics."

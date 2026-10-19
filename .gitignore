@@ -1,0 +1,22 @@
+# Python environment
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+
+# Databricks credentials
+profiles.yml
+.databrickscfg
+
+# dbt generated files
+**/target/
+**/dbt_packages/
+**/logs/
+
+# Raw advertising datasets
+data/
+*.csv
+
+# macOS
+.DS_Store
