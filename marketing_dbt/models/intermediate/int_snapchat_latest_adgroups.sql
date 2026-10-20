@@ -33,16 +33,4 @@ final AS (
 
 )
 
-SELECT * FROM final
-
-
-
-# Why I did this?
-# I discovered an issue earlier?
-# - Snapchat had 267 raw ad-group records.
-# - Three ad-group IDs appeared twice.
-# - Joining directly to the history table produced 25 additional advertisement rows.
-# This model selects one current-state record per ad_group_id, using the latest update timestamp.
-# We expect 264 records in the resulting model.
-
-
+SELECT * FROM final 

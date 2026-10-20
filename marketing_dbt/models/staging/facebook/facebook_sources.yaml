@@ -4,8 +4,9 @@ sources:
   - name: facebook
     description: "Raw Facebook advertising data ingested into Databricks."
 
-    database: marketing_development
-    schema: bronze
+    database: "{{ var('source_catalog', 'marketing_development') }}"
+    schema: "{{ var('source_schema', 'bronze') }}"
+    
 
     tables:
       - name: facebook_accounts

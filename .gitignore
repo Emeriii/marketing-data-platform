@@ -1,9 +1,14 @@
+
 # Python environment
 .venv/
 __pycache__/
 *.pyc
+.pytest_cache/
+
+# Environment variables and secrets
 .env
 .env.*
+!.env.example
 
 # Databricks credentials
 profiles.yml
@@ -13,6 +18,13 @@ profiles.yml
 **/target/
 **/dbt_packages/
 **/logs/
+# Elementary generated reports
+**/edr_target/
+
+# Python and dbt caches
+**/.user.yml
+**/.partial_parse.msgpack
+.ruff_cache/
 
 # Raw advertising datasets
 data/
@@ -20,3 +32,7 @@ data/
 
 # macOS
 .DS_Store
+
+# IDE settings
+.vscode/
+.idea/

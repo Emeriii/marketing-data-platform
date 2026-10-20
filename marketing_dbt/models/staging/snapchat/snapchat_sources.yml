@@ -4,9 +4,9 @@ sources:
   - name: snapchat
     description: "Raw Snapchat advertising data ingested into Databricks."
 
-    database: marketing_development
-    schema: bronze
-
+    database: "{{ var('source_catalog', 'marketing_development') }}"
+    schema: "{{ var('source_schema', 'bronze') }}"
+   
     tables:
       - name: snapchat_campaigns
         description: "Snapchat campaign information."
