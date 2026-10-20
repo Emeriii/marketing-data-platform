@@ -1,0 +1,84 @@
+
+name: dbt Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# CI uses a shared schema, so don't run multiple
+# builds against it simultaneously.
+concurrency:
+  group: marketing-dbt-ci
+  cancel-in-progress: false
+
+jobs:
+  dbt-ci:
+    name: Build and Test dbt Models
+    # Only run credentialed CI for branches in our own repo.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    env:
+      DBT_ENV_SECRET_CI_CLIENT_ID: ${{ secrets.DBT_ENV_SECRET_CI_CLIENT_ID }}
+      DBT_ENV_SECRET_CI_CLIENT_SECRET: ${{ secrets.DBT_ENV_SECRET_CI_CLIENT_SECRET }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.17"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install Python dependencies
+        run: uv sync --locked
+
+      - name: Configure CI dbt profile
+        run: |
+          mkdir -p "$HOME/.dbt"
+
+          cat > "$HOME/.dbt/profiles.yml" <<'EOF'
+          marketing_dbt:
+            target: ci
+            outputs:
+              ci:
+                type: databricks
+                host: dbc-305563ff-2558.cloud.databricks.com
+                http_path: /sql/1.0/warehouses/c0b492da0ac24ca9
+                catalog: ci_development
+                schema: marketing_ci
+                auth_type: oauth
+                client_id: "{{ env_var('DBT_ENV_SECRET_CI_CLIENT_ID') }}"
+                client_secret: "{{ env_var('DBT_ENV_SECRET_CI_CLIENT_SECRET') }}"
+                threads: 4
+          EOF
+
+      - name: Install dbt packages
+        run: uv run dbt deps --project-dir marketing_dbt
+
+      - name: Validate dbt connection
+        run: uv run dbt debug --project-dir marketing_dbt --target ci
+
+      - name: Compile dbt models
+        run: |
+          uv run dbt compile \
+            --project-dir marketing_dbt \
+            --target ci \
+            --vars '{"source_catalog":"bronze_production","source_schema":"marketing_raw"}'
+
+      - name: Build and test marketing models
+        run: |
+          uv run dbt build \
+            --project-dir marketing_dbt \
+            --target ci \
+            --select +fct_marketing_performance \
+            --vars '{"source_catalog":"bronze_production","source_schema":"marketing_raw"}'
