@@ -1,0 +1,91 @@
+
+name: dbt Production Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: marketing-dbt-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy dbt to Production
+    runs-on: ubuntu-latest
+
+    environment:
+      name: production
+
+    env:
+      DBT_ENV_SECRET_PROD_CLIENT_ID: ${{ secrets.DBT_ENV_SECRET_PROD_CLIENT_ID }}
+      DBT_ENV_SECRET_PROD_CLIENT_SECRET: ${{ secrets.DBT_ENV_SECRET_PROD_CLIENT_SECRET }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.17"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Configure production dbt profile
+        run: |
+          mkdir -p "$HOME/.dbt"
+
+          cat > "$HOME/.dbt/profiles.yml" <<'EOF'
+          marketing_dbt:
+            target: prod
+            outputs:
+              prod:
+                type: databricks
+                host: dbc-305563ff-2558.cloud.databricks.com
+                http_path: /sql/1.0/warehouses/c0b492da0ac24ca9
+                catalog: bronze_production
+                schema: marketing_marts
+                auth_type: oauth
+                client_id: "{{ env_var('DBT_ENV_SECRET_PROD_CLIENT_ID') }}"
+                client_secret: "{{ env_var('DBT_ENV_SECRET_PROD_CLIENT_SECRET') }}"
+                threads: 4
+          EOF
+
+      - name: Install dbt packages
+        run: uv run dbt deps --project-dir marketing_dbt
+
+      - name: Validate production connection
+        run: uv run dbt debug --project-dir marketing_dbt --target prod
+
+      - name: Compile production models
+        run: |
+          uv run dbt compile \
+            --project-dir marketing_dbt \
+            --target prod \
+            --select +fct_marketing_performance \
+            --vars '{"source_catalog":"bronze_production","source_schema":"marketing_raw"}'
+
+      - name: Deploy and test production models
+        run: |
+          uv run dbt build \
+            --project-dir marketing_dbt \
+            --target prod \
+            --select +fct_marketing_performance \
+            --vars '{"source_catalog":"bronze_production","source_schema":"marketing_raw"}'
+
+      - name: Generate dbt documentation
+        run: |
+          uv run dbt docs generate \
+            --project-dir marketing_dbt \
+            --target prod \
+            --vars '{"source_catalog":"bronze_production","source_schema":"marketing_raw"}'
